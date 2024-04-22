@@ -1,5 +1,7 @@
 package ex2
 
+import scala.util.Random
+
 type Position = (Int, Int)
 enum Direction:
   case North, East, South, West
@@ -41,6 +43,30 @@ class LoggingRobot(val robot: Robot) extends Robot:
   override def act(): Unit =
     robot.act()
     println(robot.toString)
+
+class RobotWithBattery(private val beginningPosition: Position, private val beginningDirection: Direction, var batteryLevel: Int, val actionBatteryUsage: Int) extends Robot:
+  private val robot: Robot = new SimpleRobot(beginningPosition, beginningDirection)
+  export robot.{position, direction, turn}
+  def act(): Unit =
+    if (batteryLevel - actionBatteryUsage) >= 0 then
+      batteryLevel -= actionBatteryUsage
+      robot.act()
+
+class RobotCanFail(private val beginningPosition: Position, private val beginningDirection: Direction, private val failureProbabilityPercent: Int) extends Robot:
+  private val robot: Robot = new SimpleRobot(beginningPosition, beginningDirection)
+  export robot.{position, direction, turn}
+
+  private def hasFailed: Boolean = (Random().nextInt(100) + 1) <= failureProbabilityPercent
+
+  def act(): Unit =
+    if !hasFailed then robot.act()
+
+class RobotRepeated(private val beginningPosition: Position, private val beginningDirection: Direction, private val repeat: Int) extends Robot:
+  private val robot: Robot = new SimpleRobot(beginningPosition, beginningDirection)
+  export robot.{position, direction, turn}
+
+  def act(): Unit =
+    for i <- 0 until repeat do robot.act()
 
 @main def testRobot(): Unit =
   val robot = LoggingRobot(SimpleRobot((0, 0), Direction.North))
